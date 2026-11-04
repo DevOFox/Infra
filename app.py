@@ -53,35 +53,42 @@ with st.sidebar:
         G.add_edge(n1, n2, retardo=ret, banda=bw, errores=err, activo=True)
         st.rerun()
         
-    if st.button("Desconectar Enlace") and G.has_edge(n1, n2):
-        G.remove_edge(n1, n2)
-        st.rerun()
-        
-    # --- Nueva Función: Generador Automático de Saltos ---
-    st.header("Generar Nodos Automáticos")
-    num_saltos = st.number_input("Cantidad de saltos", min_value=1, max_value=20, value=3)
-    if st.button("Generar y Calcular"):
+    # --- Nueva Función: Generador de Red Aleatoria (Malla) ---
+    st.header("Generador Automático Aleatorio")
+    st.markdown("Crea una topología compleja al azar.")
+    num_nodos = st.number_input("Nodos intermedios", min_value=1, max_value=20, value=5)
+    prob_conexion = st.slider("Probabilidad de cruces (Malla)", 0.1, 1.0, 0.3)
+    
+    if st.button("Generar Red Aleatoria"):
         st.session_state.G.clear()
         
-        # Crear una cadena de nodos basada en la cantidad de saltos ingresada
-        nodos_generados = [f"N{i}" for i in range(num_saltos)]
-        nodos_generados.insert(0, "H") # Origen por defecto
-        nodos_generados.append("B") # Sumidero por defecto
+        nodos_intermedios = [f"N{i}" for i in range(num_nodos)]
+        todos_los_nodos = ["H"] + nodos_intermedios + ["B"]
         
-        for i in range(len(nodos_generados) - 1):
-            # Asignar valores aleatorios para simular condiciones reales
-            r_retardo = random.randint(5, 50)
-            r_capacidad = random.choice([10, 50, 100, 1000])
-            r_errores = random.randint(1, 5)
+        # 1. Garantizar al menos un camino principal para que no falle el cálculo
+        for i in range(len(todos_los_nodos) - 1):
             st.session_state.G.add_edge(
-                nodos_generados[i], 
-                nodos_generados[i+1], 
-                retardo=r_retardo, 
-                banda=r_capacidad, 
-                errores=r_errores,
+                todos_los_nodos[i], 
+                todos_los_nodos[i+1], 
+                retardo=random.randint(5, 50), 
+                banda=random.choice([10, 50, 100, 1000]), 
+                errores=random.randint(1, 5),
                 activo=True
             )
-        st.success(f"Red generada con {num_saltos} saltos hasta el sumidero.")
+            
+        # 2. Añadir enlaces aleatorios extra para formar una malla
+        for i in range(len(todos_los_nodos)):
+            for j in range(i + 2, len(todos_los_nodos)): # i+2 evita duplicar la línea principal
+                if random.random() < prob_conexion:
+                    st.session_state.G.add_edge(
+                        todos_los_nodos[i], 
+                        todos_los_nodos[j], 
+                        retardo=random.randint(5, 50), 
+                        banda=random.choice([10, 50, 100, 1000]), 
+                        errores=random.randint(1, 5),
+                        activo=True
+                    )
+        st.success(f"Topología aleatoria generada con {num_nodos} nodos intermedios.")
         st.rerun()
 
 # Panel Central: Las 4 Variables de Decisión
