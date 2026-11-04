@@ -2,6 +2,7 @@ import streamlit as st
 import networkx as nx
 import plotly.graph_objects as go
 import pandas as pd
+import random
 
 # Configuración con diseño expandido y personalizado
 st.set_page_config(page_title="Sink Tree Multicriterio - Thomas, Didi & Daniel", layout="wide")
@@ -54,6 +55,33 @@ with st.sidebar:
         
     if st.button("Desconectar Enlace") and G.has_edge(n1, n2):
         G.remove_edge(n1, n2)
+        st.rerun()
+        
+    # --- Nueva Función: Generador Automático de Saltos ---
+    st.header("Generar Nodos Automáticos")
+    num_saltos = st.number_input("Cantidad de saltos", min_value=1, max_value=20, value=3)
+    if st.button("Generar y Calcular"):
+        st.session_state.G.clear()
+        
+        # Crear una cadena de nodos basada en la cantidad de saltos ingresada
+        nodos_generados = [f"N{i}" for i in range(num_saltos)]
+        nodos_generados.insert(0, "H") # Origen por defecto
+        nodos_generados.append("B") # Sumidero por defecto
+        
+        for i in range(len(nodos_generados) - 1):
+            # Asignar valores aleatorios para simular condiciones reales
+            r_retardo = random.randint(5, 50)
+            r_capacidad = random.choice([10, 50, 100, 1000])
+            r_errores = random.randint(1, 5)
+            st.session_state.G.add_edge(
+                nodos_generados[i], 
+                nodos_generados[i+1], 
+                retardo=r_retardo, 
+                banda=r_capacidad, 
+                errores=r_errores,
+                activo=True
+            )
+        st.success(f"Red generada con {num_saltos} saltos hasta el sumidero.")
         st.rerun()
 
 # Panel Central: Las 4 Variables de Decisión
